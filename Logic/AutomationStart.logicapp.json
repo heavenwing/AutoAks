@@ -1,0 +1,404 @@
+{
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceGroupName": {
+            "defaultValue": "YourResoureGroupNameOfAksCluster",
+            "type": "String"
+        },
+        "resourceName": {
+            "defaultValue": "YourResoureNameOfAksCluster",
+            "type": "String"
+        },
+        "subscriptionId": {
+            "defaultValue": "YourSubscriptionIdOfAksCluster",
+            "type": "String"
+        }
+    },
+    "triggers": {
+        "manual": {
+            "type": "Request",
+            "kind": "Http",
+            "inputs": {
+                "method": "GET"
+            }
+        }
+    },
+    "actions": {
+        "Condition_to_Start": {
+            "actions": {
+                "Managed_Clusters_-_Start": {
+                    "runAfter": {},
+                    "type": "Http",
+                    "inputs": {
+                        "authentication": {
+                            "type": "ManagedServiceIdentity"
+                        },
+                        "method": "POST",
+                        "queries": {
+                            "api-version": "2021-03-01"
+                        },
+                        "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.ContainerService/managedClusters/@{parameters('resourceName')}/start"
+                    }
+                }
+            },
+            "runAfter": {
+                "Parse_JSON_from_Get": [
+                    "Succeeded"
+                ]
+            },
+            "expression": {
+                "and": [
+                    {
+                        "equals": [
+                            "@body('Parse_JSON_from_Get')?['properties']?['powerState']?['code']",
+                            "Stopped"
+                        ]
+                    }
+                ]
+            },
+            "type": "If"
+        },
+        "Managed_Clusters_-_Get": {
+            "runAfter": {},
+            "type": "Http",
+            "inputs": {
+                "authentication": {
+                    "type": "ManagedServiceIdentity"
+                },
+                "method": "GET",
+                "queries": {
+                    "api-version": "2021-03-01"
+                },
+                "uri": "https://management.azure.com/subscriptions/@{parameters('subscriptionId')}/resourceGroups/@{parameters('resourceGroupName')}/providers/Microsoft.ContainerService/managedClusters/@{parameters('resourceName')}"
+            }
+        },
+        "Parse_JSON_from_Get": {
+            "runAfter": {
+                "Managed_Clusters_-_Get": [
+                    "Succeeded"
+                ]
+            },
+            "type": "ParseJson",
+            "inputs": {
+                "content": "@body('Managed_Clusters_-_Get')",
+                "schema": {
+                    "properties": {
+                        "id": {
+                            "type": "string"
+                        },
+                        "identity": {
+                            "properties": {
+                                "principalId": {
+                                    "type": "string"
+                                },
+                                "tenantId": {
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "location": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "properties": {
+                            "properties": {
+                                "addonProfiles": {
+                                    "properties": {
+                                        "azurepolicy": {
+                                            "properties": {
+                                                "config": {},
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "httpApplicationRouting": {
+                                            "properties": {
+                                                "config": {},
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "omsAgent": {
+                                            "properties": {
+                                                "config": {
+                                                    "properties": {
+                                                        "logAnalyticsWorkspaceResourceID": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "identity": {
+                                                    "properties": {
+                                                        "clientId": {
+                                                            "type": "string"
+                                                        },
+                                                        "objectId": {
+                                                            "type": "string"
+                                                        },
+                                                        "resourceId": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "agentPoolProfiles": {
+                                    "items": {
+                                        "properties": {
+                                            "count": {
+                                                "type": "integer"
+                                            },
+                                            "enableFIPS": {
+                                                "type": "boolean"
+                                            },
+                                            "kubeletDiskType": {
+                                                "type": "string"
+                                            },
+                                            "maxPods": {
+                                                "type": "integer"
+                                            },
+                                            "mode": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "nodeImageVersion": {
+                                                "type": "string"
+                                            },
+                                            "nodeLabels": {
+                                                "properties": {},
+                                                "type": "object"
+                                            },
+                                            "orchestratorVersion": {
+                                                "type": "string"
+                                            },
+                                            "osDiskSizeGB": {
+                                                "type": "integer"
+                                            },
+                                            "osDiskType": {
+                                                "type": "string"
+                                            },
+                                            "osSKU": {
+                                                "type": "string"
+                                            },
+                                            "osType": {
+                                                "type": "string"
+                                            },
+                                            "powerState": {
+                                                "properties": {
+                                                    "code": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "provisioningState": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "vmSize": {
+                                                "type": "string"
+                                            },
+                                            "vnetSubnetID": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "name",
+                                            "count",
+                                            "vmSize",
+                                            "osDiskSizeGB",
+                                            "osDiskType",
+                                            "kubeletDiskType",
+                                            "vnetSubnetID",
+                                            "maxPods",
+                                            "type",
+                                            "provisioningState",
+                                            "powerState",
+                                            "orchestratorVersion",
+                                            "mode",
+                                            "osType",
+                                            "osSKU",
+                                            "nodeImageVersion",
+                                            "enableFIPS"
+                                        ],
+                                        "type": "object"
+                                    },
+                                    "type": "array"
+                                },
+                                "apiServerAccessProfile": {
+                                    "properties": {
+                                        "enablePrivateCluster": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "azurePortalFQDN": {
+                                    "type": "string"
+                                },
+                                "dnsPrefix": {
+                                    "type": "string"
+                                },
+                                "enableRBAC": {
+                                    "type": "boolean"
+                                },
+                                "fqdn": {
+                                    "type": "string"
+                                },
+                                "identityProfile": {
+                                    "properties": {
+                                        "kubeletidentity": {
+                                            "properties": {
+                                                "clientId": {
+                                                    "type": "string"
+                                                },
+                                                "objectId": {
+                                                    "type": "string"
+                                                },
+                                                "resourceId": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "kubernetesVersion": {
+                                    "type": "string"
+                                },
+                                "maxAgentPools": {
+                                    "type": "integer"
+                                },
+                                "networkProfile": {
+                                    "properties": {
+                                        "dnsServiceIP": {
+                                            "type": "string"
+                                        },
+                                        "dockerBridgeCidr": {
+                                            "type": "string"
+                                        },
+                                        "loadBalancerProfile": {
+                                            "properties": {
+                                                "effectiveOutboundIPs": {
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id"
+                                                        ],
+                                                        "type": "object"
+                                                    },
+                                                    "type": "array"
+                                                },
+                                                "managedOutboundIPs": {
+                                                    "properties": {
+                                                        "count": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "loadBalancerSku": {
+                                            "type": "string"
+                                        },
+                                        "networkPlugin": {
+                                            "type": "string"
+                                        },
+                                        "outboundType": {
+                                            "type": "string"
+                                        },
+                                        "serviceCidr": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "nodeResourceGroup": {
+                                    "type": "string"
+                                },
+                                "powerState": {
+                                    "properties": {
+                                        "code": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "provisioningState": {
+                                    "type": "string"
+                                },
+                                "servicePrincipalProfile": {
+                                    "properties": {
+                                        "clientId": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "windowsProfile": {
+                                    "properties": {
+                                        "adminUsername": {
+                                            "type": "string"
+                                        },
+                                        "enableCSIProxy": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "sku": {
+                            "properties": {
+                                "name": {
+                                    "type": "string"
+                                },
+                                "tier": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "type": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                }
+            }
+        }
+    },
+    "outputs": {}
+}
